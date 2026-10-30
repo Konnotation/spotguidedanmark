@@ -26,9 +26,13 @@ Danmarks bedste digitale spotguide for street-skatere og filmere: et kort over d
 
 ## Sådan ligger siden nu
 
+Live på https://spotguidedanmark.vercel.app. Vercel deployer automatisk, når der pushes til `main`. Push sker fra GitHub Desktop, fordi login ligger der.
+
 Forsiden (3B) er en simpel statisk side i mappen `public/`: `index.html`, `style.css`, `skate.js` og `billeder/`. `vercel.json` fortæller Vercel, at kun `public/` skal online. Den kræver ikke Node.js eller byggetrin. Den bliver skiftet ud med Next.js, når kortet bygges i Fase 1.
 
-Repositoriet er offentligt. `data/` er derfor bevidst ikke lagt på GitHub, fordi spotlisten ikke er bekræftet på stedet endnu.
+`public/koebenhavn/` er by-siden med kort (MapLibre og OpenFreeMap, begge uden nøgle) og liste. Dens 96 spots ligger i `public/data/koebenhavn.json`, som er et udtræk af den samlede spotliste.
+
+Repositoriet er offentligt. `data/` med den samlede spotliste og research-noter er bevidst ikke lagt på GitHub.
 
 ## Køreplan
 
@@ -89,7 +93,8 @@ Skatevideoer, gemte spots, bedre søgning, spothistorik og flere community-funkt
 ## Kendte problemer
 
 - Kamerafotoene i `public/billeder/` er fundet på nettet og skal skiftes til egne fotos eller bruges med tilladelse.
-- Alle links på forsiden er pladsholdere, og byerne viser testdata.
+- Kun København har en side. Aarhus, Odense og Aalborg står som "Kommer".
+- Spottene på København-siden er ikke bekræftet på stedet og har ingen billeder endnu.
 
 ## Næste opgave
 

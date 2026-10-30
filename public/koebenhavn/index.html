@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>København | Spotguide Danmark</title>
+<meta name="description" content="Kort over skatespots i København. Spottene er ikke bekræftet på stedet endnu.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="/koebenhavn/style.css">
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="/">Spotguide Danmark</a>
+  <a href="/">Alle byer</a>
+</header>
+
+<div class="by-baand">
+  <h1>København</h1>
+  <p id="antal">Indlæser spots</p>
+</div>
+
+<main class="layout">
+  <section class="kort-boks" aria-label="Kort over København">
+    <div id="kort"></div>
+    <p id="kort-fejl" class="kort-fejl" hidden>Kortet kunne ikke indlæses. Prøv at genindlæse siden. Listen virker stadig.</p>
+  </section>
+
+  <aside class="panel" aria-label="Spots">
+    <p class="advarsel">Ingen spots er bekræftet på stedet endnu. Nogle kan være væk eller ligge forkert.</p>
+    <div class="filtre" id="filtre" role="group" aria-label="Filtrer spots"></div>
+    <ul class="liste" id="liste"></ul>
+  </aside>
+
+  <section class="detalje" id="detalje" aria-live="polite" hidden></section>
+</main>
+
+<div id="korn" class="korn" aria-hidden="true"></div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="/koebenhavn/kort.js"></script>
+</body>
+</html>
