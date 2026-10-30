@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spotguide Danmark</title>
+<meta name="description" content="Danmarks spotguide for street-skatere og filmere.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="side">
+  <header class="top">
+    <a class="logo" href="#">Spotguide Danmark</a>
+    <nav aria-label="Hovedmenu">
+      <a href="#">Søg</a>
+      <a class="kun-stor" href="#">Tilføj spot</a>
+    </nav>
+  </header>
+
+  <section id="skate-hero" class="hero">
+    <svg class="skate-lag" aria-hidden="true">
+      <g fill="#15191C">
+        <g id="skate-braet" display="none">
+          <path id="skate-daek"></path>
+          <path id="skate-hjul-a" transform="translate(-96 48) scale(0.5)"></path>
+          <path id="skate-hjul-b" transform="translate(96 48) scale(0.5)"></path>
+        </g>
+        <g id="skate-spg">
+          <path id="skate-bue"></path>
+          <path id="skate-prik" transform="translate(-5 114.3)"></path>
+        </g>
+      </g>
+    </svg>
+    <div class="titel-boks">
+      <h1 id="skate-titel">
+        <span class="ord" style="animation-delay: 0.1s">Hvor</span>
+        <span class="ord" style="animation-delay: 0.22s">skal</span>
+        <span class="ord" style="animation-delay: 0.34s">vi</span>
+        <span class="ord" style="animation-delay: 0.46s">hen?</span>
+      </h1>
+    </div>
+    <div id="skate-scene" class="scene">
+      <div id="skate-plads" class="plads"></div>
+      <div id="kam-1" class="kam kam-hpx">
+        <img class="kamera-1" src="billeder/hpx.png" alt="Panasonic HPX-kamera med fisheye-linse" width="518" height="488">
+      </div>
+      <div id="kam-2" class="kam kam-vx">
+        <img class="kamera-2" src="billeder/vx.png" alt="Sony VX1000-kamera med fisheye-linse" width="864" height="737">
+      </div>
+    </div>
+  </section>
+
+  <nav class="byer" aria-label="Vælg by">
+    <a class="by" style="background: #6A8FA8" href="#"><span class="bynavn">København</span><span class="kun-stor">Testdata</span></a>
+    <a class="by" style="background: #C9A24C" href="#"><span class="bynavn">Aarhus</span><span class="kun-stor">Testdata</span></a>
+    <a class="by" style="background: #7F9A7C" href="#"><span class="bynavn">Odense</span><span class="kun-stor">Testdata</span></a>
+    <a class="by" style="background: #ECEAE5" href="#"><span class="bynavn">Aalborg</span><span class="kun-stor">Testdata</span></a>
+    <a class="hele-kortet" href="#">Åbn hele kortet</a>
+  </nav>
+
+  <div id="skate-korn" class="korn" aria-hidden="true"></div>
+</div>
+<script src="skate.js"></script>
+</body>
+</html>
