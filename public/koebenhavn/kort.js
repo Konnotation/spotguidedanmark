@@ -23,7 +23,7 @@
     return e;
   };
 
-  let spots = [], filter = 'alle', kort = null, kortKlar = false, popup = null, rettelser = {};
+  let spots = [], filter = 'alle', kort = null, kortKlar = false, popup = null, rettelser = {}, panorama = null;
 
   const synlige = () => {
     const f = FILTRE.find((x) => x.id === filter);
@@ -41,20 +41,35 @@
 
   const visning = (s) => rettelser[s.id] || s.sv || null;
 
-  // Læser kameraets position og retning ud af et Street View-link fra Google Maps.
-  function laesLink(tekst) {
-    const m = String(tekst).match(/@(-?[\d.]+),(-?[\d.]+),3a(?:,([\d.]+)y)?(?:,([\d.]+)h)?(?:,([\d.]+)t)?/);
-    if (!m) return null;
-    const sv = {
-      lat: Number(m[1]),
-      lng: Number(m[2]),
-      fov: Math.max(10, Math.min(100, Math.round(Number(m[3] || 75)))),
-      heading: Number(Number(m[4] || 0).toFixed(1)),
-      pitch: Number((Number(m[5] || 90) - 90).toFixed(1)),
+  // Rettetilstand: et Street View, man kan styre, så vinklen kan aflæses og gemmes.
+  function styrbartBillede(s) {
+    const boks = ny('div', 'popup-billede');
+    const sv = visning(s);
+    const start = () => {
+      panorama = new google.maps.StreetViewPanorama(boks, {
+        position: sv ? { lat: sv.lat, lng: sv.lng } : { lat: s.lat, lng: s.lng },
+        pano: sv && sv.pano ? sv.pano : undefined,
+        pov: sv ? { heading: sv.heading, pitch: sv.pitch } : { heading: 0, pitch: 0 },
+        zoom: sv ? Math.log2(180 / sv.fov) : 1,
+        fullscreenControl: false,
+        addressControl: false,
+      });
     };
-    const p = String(tekst).match(/!1s([^!]+)!2e0/);
-    if (p) sv.pano = decodeURIComponent(p[1]);
-    return sv;
+    if (window.google && google.maps && google.maps.StreetViewPanorama) start();
+    else boks.textContent = 'Street View kunne ikke indlæses.';
+    return boks;
+  }
+
+  function aflaes() {
+    const pov = panorama.getPov(), sted = panorama.getPosition();
+    return {
+      lat: Number(sted.lat().toFixed(6)),
+      lng: Number(sted.lng().toFixed(6)),
+      fov: Math.max(10, Math.min(100, Math.round(180 / Math.pow(2, panorama.getZoom())))),
+      heading: Number(pov.heading.toFixed(1)),
+      pitch: Number(pov.pitch.toFixed(1)),
+      pano: panorama.getPano(),
+    };
   }
 
   function streetViewAdresse(s) {
@@ -126,34 +141,40 @@
     el('ret-antal').textContent = Object.keys(rettelser).length + ' spots framet i denne browser';
   }
 
+  function naeste(s) {
+    const liste = synlige(), i = liste.findIndex((x) => x.id === s.id);
+    const n = liste[i + 1];
+    visListe();
+    if (n) {
+      visPopup(n);
+      const k = el('liste').children[i + 1];
+      if (k) k.scrollIntoView({ block: 'center' });
+    } else if (popup) {
+      popup.remove();
+    }
+  }
+
   function retBoks(s) {
     const boks = ny('div', 'ret-boks');
-    const aabn = ny('a', 'ret-aabn', '1. Åbn i Google Maps');
-    aabn.href = 'https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=' + s.lat + ',' + s.lng;
-    aabn.target = '_blank';
-    aabn.rel = 'noopener';
-    const felt = ny('input');
-    felt.type = 'url';
-    felt.placeholder = '2. Indsæt linket fra Google Maps her';
-    felt.setAttribute('aria-label', 'Link fra Google Maps');
-    const besked = ny('p', 'ret-besked', visning(s) ? 'Dette spot er framet.' : 'Dette spot er ikke framet endnu.');
-    felt.addEventListener('input', () => {
-      const sv = laesLink(felt.value);
-      if (!sv) {
-        besked.textContent = 'Det ligner ikke et Street View-link. Kopiér hele adressen fra Google Maps.';
-        return;
-      }
-      rettelser[s.id] = sv;
+    const gem = ny('button', 'ret-gem', 'Gem og næste spot');
+    gem.type = 'button';
+    gem.addEventListener('click', () => {
+      if (!panorama || !panorama.getPosition()) return;
+      rettelser[s.id] = aflaes();
       gemRettelser();
-      visPopup(s);
+      naeste(s);
     });
-    boks.append(aabn, felt, besked);
+    const spring = ny('button', 'ret-spring', 'Spring over');
+    spring.type = 'button';
+    spring.addEventListener('click', () => naeste(s));
+    boks.append(gem, spring);
     if (rettelser[s.id]) {
-      const nulstil = ny('button', 'ret-nulstil', 'Fortryd framing');
+      const nulstil = ny('button', 'ret-spring', 'Fortryd');
       nulstil.type = 'button';
       nulstil.addEventListener('click', () => {
         delete rettelser[s.id];
         gemRettelser();
+        visListe();
         visPopup(s);
       });
       boks.append(nulstil);
@@ -190,7 +211,7 @@
     kort.getSource('valgt').setData(geo([s]));
 
     const inde = ny('div');
-    inde.append(billede(s), info(s));
+    inde.append(RET_TILSTAND ? styrbartBillede(s) : billede(s), info(s));
     const denne = new maplibregl.Popup({ anchor: 'bottom', offset: 14, maxWidth: 'none', closeButton: false, className: 'spot-popup', focusAfterOpen: false })
       .setLngLat([s.lng, s.lat])
       .setDOMContent(inde)
@@ -261,6 +282,10 @@
     try { rettelser = JSON.parse(localStorage.getItem(RET_NOEGLE)) || {}; } catch (e) { rettelser = {}; }
     el('ret-baand').hidden = false;
     gemRettelser();
+    const google = ny('script');
+    google.src = 'https://maps.googleapis.com/maps/api/js?key=' + GOOGLE_NOEGLE + '&v=weekly';
+    google.async = true;
+    document.head.append(google);
     el('ret-kopier').addEventListener('click', () => {
       const tekst = JSON.stringify(rettelser);
       const svar = el('ret-kopieret');

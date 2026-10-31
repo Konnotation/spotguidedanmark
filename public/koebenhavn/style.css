@@ -129,11 +129,9 @@ h1 {
 .ret-baand[hidden], #ret-kopieret[hidden] { display: none; }
 .ret-baand button { min-height: 40px; padding: 0 12px; border: 0; background: var(--papir); color: var(--blaek); font: inherit; font-weight: 800; cursor: pointer; }
 #ret-kopieret { width: 100%; height: 80px; font: inherit; font-size: 12px; }
-.ret-boks { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding: 8px; border: 2px dashed var(--blaek); }
-.ret-aabn { font-weight: 800; }
-.ret-boks input { min-height: 44px; padding: 0 8px; border: 2px solid var(--blaek); border-radius: 0; background: #fff; color: var(--blaek); font: inherit; font-size: 16px; }
-.ret-besked { font-size: 14px; }
-.ret-nulstil { align-self: flex-start; min-height: 36px; padding: 0 8px; border: 2px solid var(--blaek); background: transparent; font: inherit; cursor: pointer; }
+.ret-boks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.ret-gem { flex: 1 1 200px; min-height: 48px; border: 0; background: var(--filmet); color: var(--blaek); font: inherit; font-weight: 800; cursor: pointer; }
+.ret-spring { min-height: 44px; padding: 0 10px; border: 2px solid var(--blaek); background: transparent; color: var(--blaek); font: inherit; cursor: pointer; }
 
 .panel { padding: 16px; }
 .advarsel { margin: 0 0 12px; padding: 10px 12px; background: var(--blaek); color: var(--papir); }
