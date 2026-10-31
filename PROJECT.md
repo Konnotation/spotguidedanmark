@@ -90,6 +90,12 @@ Skatevideoer, gemte spots, bedre søgning, spothistorik og flere community-funkt
 - Regler for persondata (GDPR), når brugere indsender rapporter og billeder.
 - Hvordan vi håndterer spots på privat grund, og hvem der ejer indsendte billeder.
 
+## Kortet i København
+
+Bydele ligger i `public/data/koebenhavn-bydele.json`. Kilden er Københavns Kommunes bydele, Frederiksberg fra OpenStreetMap. Bispebjerg hedder Nordvest på siden, og Vesterbro/Sydhavnen er delt med en omtrentlig linje langs banen. Hvert spot har feltet `bydel`.
+
+Egne billeder lægges i `public/billeder/spots/` og sættes på spottet med feltet `billede`. De bliver til små fotos på kortet ved zoom 14 og derover. Street View bruges ikke som små billeder, fordi det koster pr. billede.
+
 ## Sådan frames Street View
 
 Åbn https://spotguidedanmark.vercel.app/koebenhavn/?ret=1 og tryk på et spot. Kig rundt i det store billede, og tryk "Gem og næste spot". Vinkler gemmes i den browser. "Kopiér rettelser" giver en tekst, som Claude lægger i `public/data/koebenhavn.json` som feltet `sv`. Slettede spots eksporteres som `{"slettet":true}`, fjernes fra `public/data/koebenhavn.json` og bevares i `data/`. Rettetilstand bruger Maps JavaScript API; almindelige besøgende bruger det gratis Maps Embed API.

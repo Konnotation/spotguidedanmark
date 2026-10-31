@@ -24,10 +24,11 @@
   };
 
   let spots = [], filter = 'alle', kort = null, kortKlar = false, popup = null, rettelser = {}, panorama = null, sidstSlettet = null;
+  let bydel = 'alle', bydele = null, billedMarkorer = [];
 
   const synlige = () => {
     const f = FILTRE.find((x) => x.id === filter);
-    const liste = spots.filter((s) => !(rettelser[s.id] && rettelser[s.id].slettet));
+    const liste = spots.filter((s) => !(rettelser[s.id] && rettelser[s.id].slettet) && (bydel === 'alle' || s.bydel === bydel));
     return f.niveauer ? liste.filter((s) => f.niveauer.includes(s.niveau)) : liste;
   };
 
@@ -35,7 +36,7 @@
     type: 'FeatureCollection',
     features: liste.map((s) => ({
       type: 'Feature',
-      properties: { id: s.id, ikon: 'pin-' + s.niveau },
+      properties: { id: s.id, ikon: 'pin-' + s.niveau, navn: s.navn },
       geometry: { type: 'Point', coordinates: [s.lng, s.lat] },
     })),
   });
@@ -96,7 +97,7 @@
       k.append(f.navn);
       k.addEventListener('click', () => {
         filter = f.id;
-        if (popup) popup.remove();
+        lukSpot();
         opdater();
       });
       boks.append(k);
@@ -122,10 +123,27 @@
   function opdater() {
     visFiltre();
     visListe();
-    if (kortKlar) kort.getSource('spots').setData(geo(synlige()));
+    el('panel-antal').textContent = synlige().length + ' spots' + (bydel === 'alle' ? '' : ' i ' + bydel);
+    if (kortKlar) {
+      kort.getSource('spots').setData(geo(synlige()));
+      visBilledMarkorer();
+    }
   }
 
   function billede(s) {
+    if (!s.billede) return streetView(s);
+    const boks = ny('div', 'popup-billede');
+    const i = ny('img');
+    i.src = s.billede;
+    i.alt = s.navn;
+    const skift = ny('button', 'popup-skift', 'Se Street View');
+    skift.type = 'button';
+    skift.addEventListener('click', () => boks.replaceWith(streetView(s)));
+    boks.append(i, skift);
+    return boks;
+  }
+
+  function streetView(s) {
     const boks = ny('div', 'popup-billede');
     const f = ny('iframe');
     f.title = 'Street View ved ' + s.navn;
@@ -152,8 +170,8 @@
       visPopup(n);
       const k = el('liste').children[i + 1];
       if (k) k.scrollIntoView({ block: 'center' });
-    } else if (popup) {
-      popup.remove();
+    } else {
+      lukSpot();
     }
   }
 
@@ -177,7 +195,7 @@
       rettelser[s.id] = { slettet: true };
       sidstSlettet = s.id;
       gemRettelser();
-      if (popup) popup.remove();
+      lukSpot();
       opdater();
       if (n) visPopup(n);
     });
@@ -203,7 +221,7 @@
     const luk = ny('button', 'popup-luk', '×');
     luk.type = 'button';
     luk.setAttribute('aria-label', 'Luk');
-    luk.addEventListener('click', () => { if (popup) popup.remove(); });
+    luk.addEventListener('click', () => { lukSpot(); });
     top.append(titel, luk);
     tekst.append(top);
     if (s.beskrivelse) tekst.append(ny('p', '', s.beskrivelse));
@@ -219,13 +237,35 @@
     return tekst;
   }
 
-  function visPopup(s) {
+  function lukSpot() {
     if (popup) popup.remove();
+    const ark = el('ark');
+    if (!ark.hidden) {
+      ark.hidden = true;
+      ark.textContent = '';
+      if (kortKlar) {
+        kort.getSource('valgt').setData(geo([]));
+        kort.easeTo({ padding: { bottom: 0 }, duration: 300 });
+      }
+    }
+  }
+
+  function visPopup(s) {
+    lukSpot();
     if (!kortKlar) return;
     kort.getSource('valgt').setData(geo([s]));
 
     const inde = ny('div');
     inde.append(RET_TILSTAND ? styrbartBillede(s) : billede(s), info(s));
+    if (window.innerWidth < 900) {
+      const ark = el('ark');
+      ark.append(inde);
+      ark.hidden = false;
+      ark.scrollTop = 0;
+      el('panel').classList.remove('aaben');
+      kort.easeTo({ center: [s.lng, s.lat], zoom: Math.max(kort.getZoom(), 14), padding: { bottom: ark.offsetHeight }, duration: 500 });
+      return;
+    }
     const denne = new maplibregl.Popup({ anchor: 'bottom', offset: 14, maxWidth: 'none', closeButton: false, className: 'spot-popup', focusAfterOpen: false })
       .setLngLat([s.lng, s.lat])
       .setDOMContent(inde)
@@ -237,6 +277,72 @@
       kort.getSource('valgt').setData(geo([]));
     });
     kort.easeTo({ center: [s.lng, s.lat], zoom: Math.max(kort.getZoom(), 13), offset: [0, (inde.offsetHeight + 26) / 2], duration: 500 });
+  }
+
+  function visBydele() {
+    const boks = el('bydele-valg');
+    boks.textContent = '';
+    const foerst = ['Indre By', 'Nørrebro', 'Vesterbro', 'Østerbro', 'Nordvest', 'Sydhavnen'];
+    const resten = bydele.features.map((f) => f.properties.navn).filter((n) => !foerst.includes(n));
+    const navne = ['alle'].concat(foerst, resten);
+    navne.forEach((n) => {
+      const k = ny('button', 'bydel-knap', n === 'alle' ? 'Hele byen' : n);
+      k.type = 'button';
+      k.setAttribute('aria-pressed', String(n === bydel));
+      k.addEventListener('click', () => vaelgBydel(n));
+      boks.append(k);
+    });
+  }
+
+  function vaelgBydel(n) {
+    bydel = n;
+    lukSpot();
+    visBydele();
+    opdater();
+    if (!kortKlar) return;
+    kort.setFilter('bydel-valgt', ['==', ['get', 'navn'], n]);
+    if (n === 'alle') {
+      kort.easeTo({ center: [12.56, 55.68], zoom: 11, duration: 500 });
+    } else {
+      const k = bydele.features.find((f) => f.properties.navn === n).properties.kasse;
+      kort.fitBounds([[k[0], k[1]], [k[2], k[3]]], { padding: 40, duration: 500 });
+    }
+  }
+
+  // Egne billeder bliver til små fotos på kortet, når man zoomer ind.
+  function visBilledMarkorer() {
+    billedMarkorer.forEach((m) => m.remove());
+    billedMarkorer = synlige().filter((s) => s.billede).map((s) => {
+      const k = ny('button', 'billed-markor');
+      k.type = 'button';
+      k.setAttribute('aria-label', s.navn);
+      const i = ny('img');
+      i.src = s.billede;
+      i.alt = '';
+      k.append(i);
+      k.addEventListener('click', (e) => { e.stopPropagation(); visPopup(s); });
+      return new maplibregl.Marker({ element: k }).setLngLat([s.lng, s.lat]).addTo(kort);
+    });
+    skiftBilledMarkorer();
+  }
+
+  function skiftBilledMarkorer() {
+    const vis = kort.getZoom() >= 14;
+    billedMarkorer.forEach((m) => { m.getElement().style.display = vis ? '' : 'none'; });
+  }
+
+  function tilfoejBydelsLag() {
+    const punkter = { type: 'FeatureCollection', features: bydele.features.map((f) => ({ type: 'Feature', properties: { navn: f.properties.navn }, geometry: { type: 'Point', coordinates: f.properties.midt } })) };
+    kort.addSource('bydele', { type: 'geojson', data: bydele });
+    kort.addSource('bydel-punkter', { type: 'geojson', data: punkter });
+    kort.addLayer({ id: 'bydel-klik', type: 'fill', source: 'bydele', paint: { 'fill-color': '#000', 'fill-opacity': 0 } });
+    kort.addLayer({ id: 'bydel-valgt', type: 'fill', source: 'bydele', filter: ['==', ['get', 'navn'], ''], paint: { 'fill-color': '#C8674A', 'fill-opacity': 0.18 } });
+    kort.addLayer({ id: 'bydel-linje', type: 'line', source: 'bydele', paint: { 'line-color': '#15191C', 'line-width': 2, 'line-opacity': 0.7 } });
+    kort.addLayer({ id: 'bydel-navne', type: 'symbol', source: 'bydel-punkter', maxzoom: 14, layout: { 'text-field': ['get', 'navn'], 'text-font': ['Noto Sans Bold'], 'text-size': 14, 'text-transform': 'uppercase', 'text-letter-spacing': 0.04 }, paint: { 'text-color': '#15191C', 'text-halo-color': '#ECEAE5', 'text-halo-width': 2 } });
+    kort.on('click', 'bydel-klik', (e) => {
+      if (kort.getZoom() >= 12.5 || kort.queryRenderedFeatures(e.point, { layers: ['spots'] }).length) return;
+      vaelgBydel(e.features[0].properties.navn);
+    });
   }
 
   function firkant(farve, stoerrelse) {
@@ -278,9 +384,11 @@
 
       Object.keys(FARVER).forEach((n) => kort.addImage('pin-' + n, firkant(FARVER[n], 13)));
       kort.addImage('pin-valgt', firkant('#ECEAE5', 21));
+      if (bydele) tilfoejBydelsLag();
       kort.addSource('spots', { type: 'geojson', data: geo(synlige()) });
       kort.addSource('valgt', { type: 'geojson', data: geo([]) });
-      kort.addLayer({ id: 'spots', type: 'symbol', source: 'spots', layout: { 'icon-image': ['get', 'ikon'], 'icon-allow-overlap': true, 'icon-ignore-placement': true } });
+      kort.addLayer({ id: 'spots', type: 'symbol', source: 'spots', layout: { 'icon-image': ['get', 'ikon'], 'icon-size': ['interpolate', ['linear'], ['zoom'], 11, 1, 15, 1.7], 'icon-allow-overlap': true, 'icon-ignore-placement': true } });
+      kort.addLayer({ id: 'spot-navne', type: 'symbol', source: 'spots', minzoom: 14, layout: { 'text-field': ['get', 'navn'], 'text-font': ['Noto Sans Bold'], 'text-size': 13, 'text-anchor': 'top', 'text-offset': [0, 1.1], 'text-max-width': 9 }, paint: { 'text-color': '#15191C', 'text-halo-color': '#ECEAE5', 'text-halo-width': 2 } });
       kort.addLayer({ id: 'valgt', type: 'symbol', source: 'valgt', layout: { 'icon-image': 'pin-valgt', 'icon-allow-overlap': true, 'icon-ignore-placement': true } });
       kort.on('click', 'spots', (e) => {
         const s = spots.find((x) => x.id === e.features[0].properties.id);
@@ -288,7 +396,9 @@
       });
       kort.on('mouseenter', 'spots', () => { kort.getCanvas().style.cursor = 'pointer'; });
       kort.on('mouseleave', 'spots', () => { kort.getCanvas().style.cursor = ''; });
+      kort.on('zoom', skiftBilledMarkorer);
       kortKlar = true;
+      visBilledMarkorer();
     });
   }
 
@@ -336,15 +446,20 @@
 
   startKorn();
   if (RET_TILSTAND) startRetTilstand();
-  fetch('/data/koebenhavn.json')
-    .then((r) => { if (!r.ok) throw new Error('data'); return r.json(); })
-    .then((data) => {
+  el('panel-greb').addEventListener('click', () => el('panel').classList.toggle('aaben'));
+  Promise.all([
+    fetch('/data/koebenhavn.json').then((r) => { if (!r.ok) throw new Error('data'); return r.json(); }),
+    fetch('/data/koebenhavn-bydele.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
+  ])
+    .then(([data, omraader]) => {
       spots = data;
+      bydele = omraader;
+      if (bydele) visBydele();
       el('antal').textContent = spots.length + ' spots, ingen bekræftet på stedet';
       opdater();
       startKort();
     })
     .catch(() => { el('antal').textContent = 'Spots kunne ikke indlæses. Prøv at genindlæse siden.'; });
 
-  window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && popup) popup.remove(); });
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') lukSpot(); });
 })();

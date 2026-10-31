@@ -33,15 +33,19 @@
 <main class="layout">
   <section class="kort-boks" aria-label="Kort over København">
     <div id="kort"></div>
+    <div class="bydele-valg" id="bydele-valg" role="group" aria-label="Vælg bydel"></div>
     <p id="kort-fejl" class="kort-fejl" hidden>Kortet kunne ikke indlæses. Prøv at genindlæse siden. Listen virker stadig.</p>
   </section>
 
-  <aside class="panel" aria-label="Spots">
+  <aside class="panel" id="panel" aria-label="Spots">
+    <button type="button" class="panel-greb" id="panel-greb"><span id="panel-antal">Spots</span></button>
     <p class="advarsel">Ingen spots er bekræftet på stedet endnu. Nogle kan være væk eller ligge forkert.</p>
     <div class="filtre" id="filtre" role="group" aria-label="Filtrer spots"></div>
     <ul class="liste" id="liste"></ul>
   </aside>
 </main>
+
+<section class="ark" id="ark" aria-live="polite" hidden></section>
 
 <div id="korn" class="korn" aria-hidden="true"></div>
 

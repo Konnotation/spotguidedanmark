@@ -39,19 +39,19 @@ a { color: var(--blaek); }
   justify-content: space-between;
   align-items: flex-end;
   gap: 4px 24px;
-  padding: 12px 16px;
+  padding: 6px 16px;
   background: var(--blaa);
 }
 h1 {
   margin: 0;
-  font-size: 46px;
+  font-size: 30px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.02em;
 }
 .by-baand p { margin: 0; }
 
-.kort-boks { position: relative; height: 68vh; height: 68dvh; background: var(--blaa); }
+.kort-boks { position: relative; height: calc(100vh - 150px); height: calc(100dvh - 150px); background: var(--blaa); }
 #kort { position: absolute; inset: 0; }
 .kort-fejl {
   position: absolute;
@@ -134,7 +134,92 @@ h1 {
 .ret-baand button[hidden] { display: none; }
 .ret-spring { min-height: 44px; padding: 0 10px; border: 2px solid var(--blaek); background: transparent; color: var(--blaek); font: inherit; cursor: pointer; }
 
-.panel { padding: 16px; }
+/* Bydele */
+.bydele-valg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.bydele-valg::-webkit-scrollbar { display: none; }
+.bydel-knap {
+  flex: none;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 2px solid var(--blaek);
+  border-radius: 0;
+  background: var(--papir);
+  color: var(--blaek);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.bydel-knap[aria-pressed="true"] { background: var(--blaek); color: var(--papir); }
+.kort-boks .maplibregl-ctrl-top-right { top: 56px; }
+
+/* Egne billeder på kortet */
+.billed-markor { width: 72px; height: 72px; padding: 0; border: 3px solid var(--blaek); background: var(--blaek); cursor: pointer; }
+.billed-markor img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.popup-billede { position: relative; }
+.popup-billede img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.popup-skift { position: absolute; right: 8px; bottom: 8px; min-height: 40px; padding: 0 12px; border: 0; background: var(--blaek); color: var(--papir); font: inherit; font-weight: 800; cursor: pointer; }
+
+/* Telefon: spottet åbner som et ark nedefra */
+.ark {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 12;
+  max-height: 76vh;
+  max-height: 76dvh;
+  overflow-y: auto;
+  background: var(--papir);
+  border-top: 3px solid var(--blaek);
+}
+.ark[hidden] { display: none; }
+.ark .popup-billede { height: 40vh; height: 40dvh; }
+.ark .popup-tekst { max-height: none; }
+
+.panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 8;
+  max-height: 72vh;
+  max-height: 72dvh;
+  overflow-y: auto;
+  padding: 0 16px 16px;
+  background: var(--papir);
+  border-top: 3px solid var(--blaek);
+}
+.panel-greb {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: block;
+  width: calc(100% + 32px);
+  min-height: 56px;
+  margin: 0 -16px;
+  border: 0;
+  background: var(--papir);
+  color: var(--blaek);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.panel-greb::after { content: ' ▲'; font-size: 13px; }
+.panel.aaben .panel-greb::after { content: ' ▼'; }
+.panel:not(.aaben) > :not(.panel-greb) { display: none; }
 .advarsel { margin: 0 0 12px; padding: 10px 12px; background: var(--blaek); color: var(--papir); }
 
 .filtre { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
@@ -200,7 +285,10 @@ h1 {
     min-height: 480px;
   }
   .kort-boks { height: 100%; }
-  .panel { height: 100%; overflow-y: auto; padding: 16px 24px; }
+  .panel { position: static; z-index: auto; max-height: none; height: 100%; overflow-y: auto; padding: 16px 24px; border-top: 0; }
+  .panel-greb { display: none; }
+  .panel:not(.aaben) > :not(.panel-greb) { display: revert; }
+  .panel .filtre { display: flex; }
   .spot-popup .maplibregl-popup-content { width: min(680px, 56vw); }
   .popup-billede { height: 46vh; }
   .popup-tekst { max-height: 22vh; }
