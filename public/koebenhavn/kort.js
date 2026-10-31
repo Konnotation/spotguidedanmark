@@ -13,6 +13,7 @@
   // Nøgle til Google Maps Embed API, så popuppen viser Street View. Den er offentlig af natur
   // og er hos Google begrænset til Maps Embed API og spotguidedanmark.vercel.app.
   const GOOGLE_NOEGLE = 'AIzaSyDgomu5PERi4alr3jDgC9AgqKQjckU7QzI';
+  const MINI_ZOOM = 14.5;
   const RET_TILSTAND = new URLSearchParams(location.search).has('ret');
   const RET_NOEGLE = 'spotguide-streetview-rettelser';
   const el = (id) => document.getElementById(id);
@@ -24,7 +25,7 @@
   };
 
   let spots = [], filter = 'alle', kort = null, kortKlar = false, popup = null, rettelser = {}, panorama = null, sidstSlettet = null;
-  let bydel = 'alle', bydele = null, billedMarkorer = [];
+  let bydel = 'alle', bydele = null, minier = new Map(), miniTid = null;
 
   const synlige = () => {
     const f = FILTRE.find((x) => x.id === filter);
@@ -126,7 +127,7 @@
     el('panel-antal').textContent = synlige().length + ' spots' + (bydel === 'alle' ? '' : ' i ' + bydel);
     if (kortKlar) {
       kort.getSource('spots').setData(geo(synlige()));
-      visBilledMarkorer();
+      visMinier();
     }
   }
 
@@ -259,7 +260,13 @@
     inde.append(RET_TILSTAND ? styrbartBillede(s) : billede(s), info(s));
     if (window.innerWidth < 900) {
       const ark = el('ark');
-      ark.append(inde);
+      const top = ny('div', 'ark-top');
+      const luk = ny('button', 'ark-luk', 'Luk ✕');
+      luk.type = 'button';
+      luk.addEventListener('click', lukSpot);
+      top.append(ny('span', 'ark-greb'), luk);
+      ark.append(top, inde);
+      ark.style.transform = '';
       ark.hidden = false;
       ark.scrollTop = 0;
       el('panel').classList.remove('aaben');
@@ -309,26 +316,51 @@
     }
   }
 
-  // Egne billeder bliver til små fotos på kortet, når man zoomer ind.
-  function visBilledMarkorer() {
-    billedMarkorer.forEach((m) => m.remove());
-    billedMarkorer = synlige().filter((s) => s.billede).map((s) => {
-      const k = ny('button', 'billed-markor');
-      k.type = 'button';
-      k.setAttribute('aria-label', s.navn);
+  // Ved zoom bliver de nærmeste firkanter til små billeder. Street View vises via det gratis
+  // Maps Embed API, og antallet er begrænset, så telefonen ikke skal indlæse for meget.
+  function nytMini(s) {
+    const k = ny('button', 'mini');
+    k.type = 'button';
+    k.setAttribute('aria-label', 'Vis ' + s.navn);
+    const boks = ny('span', 'mini-billede');
+    if (s.billede) {
       const i = ny('img');
       i.src = s.billede;
       i.alt = '';
-      k.append(i);
-      k.addEventListener('click', (e) => { e.stopPropagation(); visPopup(s); });
-      return new maplibregl.Marker({ element: k }).setLngLat([s.lng, s.lat]).addTo(kort);
-    });
-    skiftBilledMarkorer();
+      boks.append(i);
+    } else {
+      const f = ny('iframe');
+      f.title = 'Street View ved ' + s.navn;
+      f.loading = 'lazy';
+      f.tabIndex = -1;
+      f.referrerPolicy = 'strict-origin-when-cross-origin';
+      f.src = streetViewAdresse(s);
+      boks.append(f);
+    }
+    k.append(boks, ny('span', 'mini-navn', s.navn));
+    k.addEventListener('click', (e) => { e.stopPropagation(); visPopup(s); });
+    return new maplibregl.Marker({ element: k, anchor: 'bottom', offset: [0, -14] }).setLngLat([s.lng, s.lat]).addTo(kort);
   }
 
-  function skiftBilledMarkorer() {
-    const vis = kort.getZoom() >= 14;
-    billedMarkorer.forEach((m) => { m.getElement().style.display = vis ? '' : 'none'; });
+  function visMinier() {
+    const b = kort.getBounds(), m = kort.getCenter();
+    const afstand = (s) => Math.hypot(s.lng - m.lng, s.lat - m.lat);
+    const valg = kort.getZoom() < MINI_ZOOM ? [] : synlige()
+      .filter((s) => b.contains([s.lng, s.lat]))
+      .sort((x, y) => afstand(x) - afstand(y))
+      .slice(0, window.innerWidth < 900 ? 4 : 6);
+    const ids = new Set(valg.map((s) => s.id));
+    minier.forEach((mk, id) => {
+      if (ids.has(id)) return;
+      mk.remove();
+      minier.delete(id);
+    });
+    valg.forEach((s) => { if (!minier.has(s.id)) minier.set(s.id, nytMini(s)); });
+  }
+
+  function planlaegMinier() {
+    clearTimeout(miniTid);
+    miniTid = setTimeout(visMinier, 250);
   }
 
   function tilfoejBydelsLag() {
@@ -388,7 +420,7 @@
       kort.addSource('spots', { type: 'geojson', data: geo(synlige()) });
       kort.addSource('valgt', { type: 'geojson', data: geo([]) });
       kort.addLayer({ id: 'spots', type: 'symbol', source: 'spots', layout: { 'icon-image': ['get', 'ikon'], 'icon-size': ['interpolate', ['linear'], ['zoom'], 11, 1, 15, 1.7], 'icon-allow-overlap': true, 'icon-ignore-placement': true } });
-      kort.addLayer({ id: 'spot-navne', type: 'symbol', source: 'spots', minzoom: 14, layout: { 'text-field': ['get', 'navn'], 'text-font': ['Noto Sans Bold'], 'text-size': 13, 'text-anchor': 'top', 'text-offset': [0, 1.1], 'text-max-width': 9 }, paint: { 'text-color': '#15191C', 'text-halo-color': '#ECEAE5', 'text-halo-width': 2 } });
+      kort.addLayer({ id: 'spot-navne', type: 'symbol', source: 'spots', minzoom: 13.5, layout: { 'text-field': ['get', 'navn'], 'text-font': ['Noto Sans Bold'], 'text-size': 13, 'text-anchor': 'top', 'text-offset': [0, 1.1], 'text-max-width': 9 }, paint: { 'text-color': '#15191C', 'text-halo-color': '#ECEAE5', 'text-halo-width': 2 } });
       kort.addLayer({ id: 'valgt', type: 'symbol', source: 'valgt', layout: { 'icon-image': 'pin-valgt', 'icon-allow-overlap': true, 'icon-ignore-placement': true } });
       kort.on('click', 'spots', (e) => {
         const s = spots.find((x) => x.id === e.features[0].properties.id);
@@ -396,9 +428,9 @@
       });
       kort.on('mouseenter', 'spots', () => { kort.getCanvas().style.cursor = 'pointer'; });
       kort.on('mouseleave', 'spots', () => { kort.getCanvas().style.cursor = ''; });
-      kort.on('zoom', skiftBilledMarkorer);
+      kort.on('moveend', planlaegMinier);
       kortKlar = true;
-      visBilledMarkorer();
+      visMinier();
     });
   }
 
@@ -446,6 +478,31 @@
 
   startKorn();
   if (RET_TILSTAND) startRetTilstand();
+  // Arket på telefonen lukkes med et swipe ned eller til siden.
+  function startSwipe() {
+    const ark = el('ark');
+    let sx = 0, sy = 0, dx = 0, dy = 0;
+    ark.addEventListener('touchstart', (e) => {
+      sx = e.touches[0].clientX;
+      sy = e.touches[0].clientY;
+      dx = dy = 0;
+      ark.style.transition = 'none';
+    }, { passive: true });
+    ark.addEventListener('touchmove', (e) => {
+      dx = e.touches[0].clientX - sx;
+      dy = e.touches[0].clientY - sy;
+      if (Math.abs(dx) > Math.abs(dy)) ark.style.transform = 'translateX(' + dx + 'px)';
+      else if (dy > 0 && ark.scrollTop === 0) ark.style.transform = 'translateY(' + dy + 'px)';
+    }, { passive: true });
+    ark.addEventListener('touchend', () => {
+      const kanRulle = ark.scrollHeight > ark.clientHeight + 4;
+      ark.style.transition = '';
+      ark.style.transform = '';
+      if (Math.abs(dx) > 90 || (dy > 90 && ark.scrollTop === 0) || (dy < -90 && !kanRulle)) lukSpot();
+    });
+  }
+
+  startSwipe();
   el('panel-greb').addEventListener('click', () => el('panel').classList.toggle('aaben'));
   Promise.all([
     fetch('/data/koebenhavn.json').then((r) => { if (!r.ok) throw new Error('data'); return r.json(); }),

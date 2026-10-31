@@ -15,7 +15,7 @@
   const lerp = (a, b, u) => a + (b - a) * u;
   const klem = (v, a, b) => Math.max(a, Math.min(b, v));
   const el = (id) => document.getElementById(id);
-  const vinkel = { a: 0, b: 0 };
+  const kamera = { a: { vinkel: 0, x: 0, zoom: 1 }, b: { vinkel: 0, x: 0, zoom: 1 } };
   let titelX = 0;
 
   el('skate-daek').setAttribute('d', sti(FORM_B));
@@ -38,8 +38,8 @@
     const hero = el('skate-hero').getBoundingClientRect();
     const scene = el('skate-scene').getBoundingClientRect();
     const pl = el('skate-plads').getBoundingClientRect();
-    const skala = stor ? scene.width / 930 : scene.width / 640;
-    const skalaBraet = stor ? skala : skala * 0.786;
+    const skala = stor ? scene.width / 930 : scene.width / 420;
+    const skalaBraet = stor ? skala : scene.width / 814;
     const px = pl.left - hero.left + pl.width / 2, py = pl.top - hero.top + pl.height / 2;
     const gy = hero.height - 8 - BUND * skalaBraet;
     let spg = true, x = px, y = py, drej = 0, flip = 0, r = t;
@@ -73,12 +73,21 @@
     braet.setAttribute('transform', xy + 'scale(' + skalaBraet.toFixed(3) + ' ' + (skalaBraet * f).toFixed(3) + ')');
     tegnet.setAttribute('transform', xy + 'scale(' + (skala * f).toFixed(3) + ' ' + skala.toFixed(3) + ')');
 
+    // Kameraerne panorerer efter boardet, glider fra side til side og kører tættere på eller væk.
+    const blid = Math.min(1, dt * 4);
+    const glid = (spg ? 0.03 : lerp(-0.13, 0.03, klem(x / hero.width, 0, 1))) * hero.width * (stor ? 0.5 : 1);
     [['kam-1', 'a'], ['kam-2', 'b']].forEach(([id, k]) => {
-      const kam = el(id), b = kam.getBoundingClientRect();
+      const kam = el(id), b = kam.getBoundingClientRect(), c = kamera[k];
       const cx = b.left - hero.left + b.width / 2, cy = b.top - hero.top + b.height / 2;
-      const mal = klem(Math.atan2(cy - y, Math.max(cx - x, 40)) * 180 / Math.PI * 0.8, -10, 8);
-      vinkel[k] += (mal - vinkel[k]) * Math.min(1, dt * 5);
-      kam.style.transform = 'rotate(' + vinkel[k].toFixed(2) + 'deg)';
+      const vinkelMaal = Math.atan2(cy - y, Math.max(cx - x, 40)) * 180 / Math.PI;
+      const mal = k === 'a' ? klem(vinkelMaal * 0.6 + 3, -5, 9) : klem(vinkelMaal * 1.1, -12, 10);
+      const zoomMaal = k === 'a'
+        ? (spg ? 1.1 : 0.9) + Math.sin(tid * 0.9) * 0.05
+        : (spg ? 0.97 : 1.05);
+      c.vinkel += (mal - c.vinkel) * Math.min(1, dt * 5);
+      c.x += ((k === 'a' ? glid : glid * 0.7) - c.x) * blid;
+      c.zoom += (zoomMaal - c.zoom) * blid;
+      kam.style.transform = 'translateX(' + c.x.toFixed(1) + 'px) rotate(' + c.vinkel.toFixed(2) + 'deg) scale(' + c.zoom.toFixed(3) + ')';
     });
     titelX += (klem((x - hero.width * 0.15) / hero.width, -1, 1) * (stor ? 10 : 5) - titelX) * Math.min(1, dt * 2.5);
     el('skate-titel').style.transform = 'translateX(' + titelX.toFixed(2) + 'px)';

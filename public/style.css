@@ -61,7 +61,8 @@ a { color: var(--blaek); }
 .titel-boks { position: relative; }
 h1 {
   margin: 0 0 4px;
-  font-size: clamp(54px, 13.8vw, 96px);
+  font-size: 10.6vw;
+  white-space: nowrap;
   font-weight: 800;
   line-height: 0.95;
   letter-spacing: -0.02em;
@@ -74,13 +75,13 @@ h1 {
   position: relative;
   flex: 1 1 auto;
   width: 100%;
-  aspect-ratio: 358 / 250;
+  aspect-ratio: 358 / 340;
 }
-.plads { position: absolute; left: 0; top: 0; width: 31%; height: 80%; }
+.plads { position: absolute; left: 0; top: 0; width: 46%; height: 100%; }
 .kam { position: absolute; right: 0; }
 .kam img { display: block; width: 100%; height: auto; filter: drop-shadow(0 12px 10px rgba(21, 25, 28, 0.28)); }
-.kam-hpx { top: 0; width: 32.4%; }
-.kam-vx { bottom: 0; width: 43.6%; }
+.kam-hpx { top: 2%; width: 49%; }
+.kam-vx { bottom: 0; width: 49%; }
 
 .byer { flex: none; display: flex; flex-direction: column; }
 .by {
@@ -146,7 +147,7 @@ h1 {
     padding: 24px 24px clamp(60px, 7.4vw, 110px);
   }
   .titel-boks { flex: 0 0 clamp(250px, 25.5vw, 360px); }
-  h1 { margin: 0; font-size: clamp(56px, 7.5vw, 104px); }
+  h1 { margin: 0; font-size: clamp(56px, 7.5vw, 104px); white-space: normal; }
   .scene { flex: 1 1 auto; min-width: 0; aspect-ratio: 930 / 400; }
   .plads { width: 19.4%; height: 85%; }
   .kam img { filter: drop-shadow(0 18px 14px rgba(21, 25, 28, 0.28)); }

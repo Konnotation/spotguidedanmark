@@ -164,9 +164,24 @@ h1 {
 .bydel-knap[aria-pressed="true"] { background: var(--blaek); color: var(--papir); }
 .kort-boks .maplibregl-ctrl-top-right { top: 56px; }
 
-/* Egne billeder på kortet */
-.billed-markor { width: 72px; height: 72px; padding: 0; border: 3px solid var(--blaek); background: var(--blaek); cursor: pointer; }
-.billed-markor img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* Små billeder på kortet ved zoom */
+.mini {
+  display: block;
+  width: 168px;
+  padding: 0;
+  border: 3px solid var(--blaek);
+  border-radius: 0;
+  background: var(--papir);
+  color: var(--blaek);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 6px 12px rgba(21, 25, 28, 0.28);
+}
+.mini-billede { position: relative; display: block; width: 100%; height: 112px; overflow: hidden; background: var(--blaek); }
+.mini-billede img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.mini-billede iframe { position: absolute; left: 0; top: 0; width: 324px; height: 218px; border: 0; transform: scale(.5); transform-origin: top left; pointer-events: none; }
+.mini-navn { display: block; padding: 3px 6px 4px; font-size: 13px; font-weight: 800; line-height: 1.1; }
 .popup-billede { position: relative; }
 .popup-billede img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .popup-skift { position: absolute; right: 8px; bottom: 8px; min-height: 40px; padding: 0 12px; border: 0; background: var(--blaek); color: var(--papir); font: inherit; font-weight: 800; cursor: pointer; }
@@ -185,7 +200,22 @@ h1 {
   border-top: 3px solid var(--blaek);
 }
 .ark[hidden] { display: none; }
-.ark .popup-billede { height: 40vh; height: 40dvh; }
+.ark { transition: transform .18s ease; }
+.ark-top {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 52px;
+  padding: 0 8px;
+  background: var(--blaek);
+}
+.ark-greb { position: absolute; left: 50%; width: 56px; height: 5px; margin-left: -28px; background: var(--papir); }
+.ark-luk { min-height: 44px; padding: 0 14px; border: 0; background: var(--papir); color: var(--blaek); font: inherit; font-weight: 800; cursor: pointer; }
+.ark .popup-luk { display: none; }
+.ark .popup-billede { height: 36vh; height: 36dvh; }
 .ark .popup-tekst { max-height: none; }
 
 .panel {
