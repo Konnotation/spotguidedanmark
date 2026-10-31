@@ -9,15 +9,17 @@
     { id: 'park', navn: 'Parker', niveauer: ['park'], farve: FARVER.park },
     { id: 'arkiv', navn: 'Arkiv', niveauer: ['arkiv'], farve: FARVER.arkiv },
   ];
+  // Nøgle til Google Maps Embed API. Når den er sat, viser popuppen Street View direkte på kortet.
+  const GOOGLE_NOEGLE = '';
   const el = (id) => document.getElementById(id);
-  const ny = (tag, klasse, tekst) => {
+  const ny =(tag, klasse, tekst) => {
     const e = document.createElement(tag);
     if (klasse) e.className = klasse;
     if (tekst !== undefined) e.textContent = tekst;
     return e;
   };
 
-  let spots = [], filter = 'alle', kort = null, kortKlar = false, valgt = null;
+  let spots = [], filter = 'alle', kort = null, kortKlar = false, valgt = null, popup = null;
 
   const synlige = () => {
     const f = FILTRE.find((x) => x.id === filter);
@@ -46,7 +48,11 @@
         k.append(p);
       }
       k.append(f.navn);
-      k.addEventListener('click', () => { filter = f.id; opdater(); });
+      k.addEventListener('click', () => {
+        filter = f.id;
+        if (popup) popup.remove();
+        opdater();
+      });
       boks.append(k);
     });
   }
@@ -60,7 +66,7 @@
       p.style.background = FARVER[s.niveau];
       tekst.append(ny('strong', '', s.navn), ny('small', '', s.omrade + ' · ' + s.typer.join(', ')));
       k.append(p, tekst);
-      k.addEventListener('click', () => vaelg(s, true));
+      k.addEventListener('click', () => visPopup(s));
       li.append(k);
       boks.append(li);
     });
@@ -73,13 +79,70 @@
   }
 
   function luk() {
-    valgt = null;
     el('detalje').hidden = true;
-    if (kortKlar) kort.getSource('valgt').setData(geo([]));
   }
 
-  function vaelg(s, flyv) {
+  function billede(s) {
+    const boks = ny('div', 'popup-billede');
+    if (GOOGLE_NOEGLE) {
+      const f = ny('iframe');
+      f.title = 'Street View ved ' + s.navn;
+      f.loading = 'lazy';
+      f.referrerPolicy = 'strict-origin-when-cross-origin';
+      f.allowFullscreen = true;
+      f.src = 'https://www.google.com/maps/embed/v1/streetview?key=' + GOOGLE_NOEGLE + '&location=' + s.lat + ',' + s.lng + '&fov=90';
+      boks.append(f);
+    } else if (s.foto) {
+      const i = ny('img');
+      i.src = s.foto.url;
+      i.alt = 'Gadefoto ved ' + s.navn;
+      i.addEventListener('error', () => { boks.textContent = 'Billedet kunne ikke hentes'; });
+      boks.append(i);
+    } else {
+      boks.classList.add('tom');
+      boks.textContent = 'Billede på vej';
+    }
+    return boks;
+  }
+
+  function visPopup(s) {
+    if (popup) popup.remove();
+    if (!kortKlar) { vaelg(s); return; }
     valgt = s;
+    kort.getSource('valgt').setData(geo([s]));
+
+    const inde = ny('div');
+    inde.append(billede(s));
+    const tekst = ny('div', 'popup-tekst');
+    tekst.append(ny('strong', '', s.navn), ny('small', '', NAVNE[s.niveau] + ' · ' + (s.typer.join(', ') || s.omrade)));
+    if (s.foto && !GOOGLE_NOEGLE) {
+      const a = ny('a', 'popup-kredit', 'Foto: ' + s.foto.af + ', ' + s.foto.licens + ' (' + s.foto.dato.slice(0, 4) + ')');
+      a.href = s.foto.side;
+      a.target = '_blank';
+      a.rel = 'noopener nofollow';
+      tekst.append(a);
+    }
+    const mere = ny('button', 'popup-mere', 'Se mere');
+    mere.type = 'button';
+    mere.addEventListener('click', () => vaelg(s));
+    tekst.append(mere);
+    inde.append(tekst);
+
+    const denne = new maplibregl.Popup({ anchor: 'bottom', offset: 14, maxWidth: 'none', className: 'spot-popup', focusAfterOpen: false })
+      .setLngLat([s.lng, s.lat])
+      .setDOMContent(inde)
+      .addTo(kort);
+    popup = denne;
+    denne.on('close', () => {
+      if (popup !== denne) return;
+      popup = null;
+      valgt = null;
+      kort.getSource('valgt').setData(geo([]));
+    });
+    kort.easeTo({ center: [s.lng, s.lat], zoom: Math.max(kort.getZoom(), 13), offset: [0, window.innerWidth < 900 ? 165 : 130], duration: 500 });
+  }
+
+  function vaelg(s) {
     const d = el('detalje');
     d.textContent = '';
     const lukKnap = ny('button', 'luk', '×');
@@ -114,10 +177,6 @@
     }
     d.hidden = false;
     d.scrollTop = 0;
-    if (kortKlar) {
-      kort.getSource('valgt').setData(geo([s]));
-      if (flyv) kort.flyTo({ center: [s.lng, s.lat], zoom: Math.max(kort.getZoom(), 14), padding: { bottom: window.innerWidth < 900 ? 180 : 0 } });
-    }
   }
 
   function firkant(farve, stoerrelse) {
@@ -165,7 +224,7 @@
       kort.addLayer({ id: 'valgt', type: 'symbol', source: 'valgt', layout: { 'icon-image': 'pin-valgt', 'icon-allow-overlap': true, 'icon-ignore-placement': true } });
       kort.on('click', 'spots', (e) => {
         const s = spots.find((x) => x.id === e.features[0].properties.id);
-        if (s) vaelg(s, false);
+        if (s) visPopup(s);
       });
       kort.on('mouseenter', 'spots', () => { kort.getCanvas().style.cursor = 'pointer'; });
       kort.on('mouseleave', 'spots', () => { kort.getCanvas().style.cursor = ''; });
@@ -196,5 +255,9 @@
     })
     .catch(() => { el('antal').textContent = 'Spots kunne ikke indlæses. Prøv at genindlæse siden.'; });
 
-  window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && valgt) luk(); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (!el('detalje').hidden) luk();
+    else if (popup) popup.remove();
+  });
 })();
