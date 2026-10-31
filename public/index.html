@@ -18,7 +18,12 @@
 
   <section id="skate-hero" class="hero">
     <svg class="skate-lag" aria-hidden="true">
-      <g fill="#15191C">
+      <defs>
+        <filter id="skate-sloer-filter" filterUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+          <feGaussianBlur id="skate-sloer" stdDeviation="0 0"></feGaussianBlur>
+        </filter>
+      </defs>
+      <g id="skate-sloeret" fill="#15191C">
         <g id="skate-braet" display="none">
           <path id="skate-daek"></path>
           <path id="skate-hjul-a" transform="translate(-96 48) scale(0.5)"></path>
