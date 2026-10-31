@@ -90,6 +90,10 @@ Skatevideoer, gemte spots, bedre søgning, spothistorik og flere community-funkt
 - Regler for persondata (GDPR), når brugere indsender rapporter og billeder.
 - Hvordan vi håndterer spots på privat grund, og hvem der ejer indsendte billeder.
 
+## Sådan frames Street View
+
+Åbn https://spotguidedanmark.vercel.app/koebenhavn/?ret=1 og tryk på et spot. Åbn Street View i Google Maps, ret billedet ind, kopiér adressen og indsæt den i feltet. Rettelser gemmes kun i den browser, indtil "Kopiér rettelser" er sendt til Claude, som lægger dem i `public/data/koebenhavn.json` som feltet `sv`.
+
 ## Kendte problemer
 
 - Kamerafotoene i `public/billeder/` er fundet på nettet og skal skiftes til egne fotos eller bruges med tilladelse.
