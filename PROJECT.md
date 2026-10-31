@@ -92,7 +92,7 @@ Skatevideoer, gemte spots, bedre søgning, spothistorik og flere community-funkt
 
 ## Sådan frames Street View
 
-Åbn https://spotguidedanmark.vercel.app/koebenhavn/?ret=1 og tryk på et spot. Kig rundt i det store billede, og tryk "Gem og næste spot". Vinkler gemmes i den browser. "Kopiér rettelser" giver en tekst, som Claude lægger i `public/data/koebenhavn.json` som feltet `sv`. Rettetilstand bruger Maps JavaScript API; almindelige besøgende bruger det gratis Maps Embed API.
+Åbn https://spotguidedanmark.vercel.app/koebenhavn/?ret=1 og tryk på et spot. Kig rundt i det store billede, og tryk "Gem og næste spot". Vinkler gemmes i den browser. "Kopiér rettelser" giver en tekst, som Claude lægger i `public/data/koebenhavn.json` som feltet `sv`. Slettede spots eksporteres som `{"slettet":true}`, fjernes fra `public/data/koebenhavn.json` og bevares i `data/`. Rettetilstand bruger Maps JavaScript API; almindelige besøgende bruger det gratis Maps Embed API.
 
 ## Kendte problemer
 

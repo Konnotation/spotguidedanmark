@@ -131,6 +131,7 @@ h1 {
 #ret-kopieret { width: 100%; height: 80px; font: inherit; font-size: 12px; }
 .ret-boks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
 .ret-gem { flex: 1 1 200px; min-height: 48px; border: 0; background: var(--filmet); color: var(--blaek); font: inherit; font-weight: 800; cursor: pointer; }
+.ret-baand button[hidden] { display: none; }
 .ret-spring { min-height: 44px; padding: 0 10px; border: 2px solid var(--blaek); background: transparent; color: var(--blaek); font: inherit; cursor: pointer; }
 
 .panel { padding: 16px; }

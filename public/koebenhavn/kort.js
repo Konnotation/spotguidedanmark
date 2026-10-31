@@ -23,11 +23,12 @@
     return e;
   };
 
-  let spots = [], filter = 'alle', kort = null, kortKlar = false, popup = null, rettelser = {}, panorama = null;
+  let spots = [], filter = 'alle', kort = null, kortKlar = false, popup = null, rettelser = {}, panorama = null, sidstSlettet = null;
 
   const synlige = () => {
     const f = FILTRE.find((x) => x.id === filter);
-    return f.niveauer ? spots.filter((s) => f.niveauer.includes(s.niveau)) : spots;
+    const liste = spots.filter((s) => !(rettelser[s.id] && rettelser[s.id].slettet));
+    return f.niveauer ? liste.filter((s) => f.niveauer.includes(s.niveau)) : liste;
   };
 
   const geo = (liste) => ({
@@ -138,7 +139,9 @@
 
   function gemRettelser() {
     try { localStorage.setItem(RET_NOEGLE, JSON.stringify(rettelser)); } catch (e) { /* kun til denne visning */ }
-    el('ret-antal').textContent = Object.keys(rettelser).length + ' spots framet i denne browser';
+    const r = Object.values(rettelser), slettet = r.filter((x) => x.slettet).length;
+    el('ret-antal').textContent = (r.length - slettet) + ' framet, ' + slettet + ' slettet i denne browser';
+    el('ret-fortryd').hidden = !sidstSlettet;
   }
 
   function naeste(s) {
@@ -167,7 +170,18 @@
     const spring = ny('button', 'ret-spring', 'Spring over');
     spring.type = 'button';
     spring.addEventListener('click', () => naeste(s));
-    boks.append(gem, spring);
+    const slet = ny('button', 'ret-spring ret-slet', 'Slet');
+    slet.type = 'button';
+    slet.addEventListener('click', () => {
+      const liste = synlige(), n = liste[liste.findIndex((x) => x.id === s.id) + 1];
+      rettelser[s.id] = { slettet: true };
+      sidstSlettet = s.id;
+      gemRettelser();
+      if (popup) popup.remove();
+      opdater();
+      if (n) visPopup(n);
+    });
+    boks.append(gem, spring, slet);
     if (rettelser[s.id]) {
       const nulstil = ny('button', 'ret-spring', 'Fortryd');
       nulstil.type = 'button';
@@ -286,6 +300,14 @@
     google.src = 'https://maps.googleapis.com/maps/api/js?key=' + GOOGLE_NOEGLE + '&v=weekly';
     google.async = true;
     document.head.append(google);
+    el('ret-fortryd').addEventListener('click', () => {
+      const s = spots.find((x) => x.id === sidstSlettet);
+      delete rettelser[sidstSlettet];
+      sidstSlettet = null;
+      gemRettelser();
+      opdater();
+      if (s) visPopup(s);
+    });
     el('ret-kopier').addEventListener('click', () => {
       const tekst = JSON.stringify(rettelser);
       const svar = el('ret-kopieret');
