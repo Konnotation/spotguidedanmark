@@ -95,7 +95,8 @@ Skatevideoer, gemte spots, bedre søgning, spothistorik og flere community-funkt
 - Kamerafotoene i `public/billeder/` er fundet på nettet og skal skiftes til egne fotos eller bruges med tilladelse.
 - Kun København har en side. Aarhus, Odense og Aalborg står som "Kommer".
 - Spottene på København-siden er ikke bekræftet på stedet.
-- Billed-popuppen mangler billeder: kun 7 af 96 spots har et gadefoto fra Panoramax. Street View kommer, når `GOOGLE_NOEGLE` i `public/koebenhavn/kort.js` sættes. Nøglen skal være til Maps Embed API og begrænses til sidens adresse.
+- Billed-popuppen viser Street View via Google Maps Embed API (projekt `spotguide-danmark` på Jeppes private Google-konto). Nøglen ligger i `public/koebenhavn/kort.js` og virker kun på spotguidedanmark.vercel.app. Får siden eget domæne, skal det tilføjes til nøglen hos Google.
+- Google-kontoen er på en prøveperiode på 90 dage fra 31. oktober 2026 (slutter cirka 29. januar 2027). Afklar før den tid, om der skal opgraderes, for at Street View bliver ved med at virke.
 
 ## Næste opgave
 

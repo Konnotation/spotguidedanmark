@@ -9,8 +9,9 @@
     { id: 'park', navn: 'Parker', niveauer: ['park'], farve: FARVER.park },
     { id: 'arkiv', navn: 'Arkiv', niveauer: ['arkiv'], farve: FARVER.arkiv },
   ];
-  // Nøgle til Google Maps Embed API. Når den er sat, viser popuppen Street View direkte på kortet.
-  const GOOGLE_NOEGLE = '';
+  // Nøgle til Google Maps Embed API, så popuppen viser Street View. Den er offentlig af natur
+  // og er hos Google begrænset til Maps Embed API og spotguidedanmark.vercel.app.
+  const GOOGLE_NOEGLE = 'AIzaSyDgomu5PERi4alr3jDgC9AgqKQjckU7QzI';
   const el = (id) => document.getElementById(id);
   const ny =(tag, klasse, tekst) => {
     const e = document.createElement(tag);
